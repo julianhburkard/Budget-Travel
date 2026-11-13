@@ -2,6 +2,8 @@
 
 Plan a trip's full cost before you go: set a total budget and travel dates, add fixed costs, and plan each day.
 
+**Live app:** https://julianhburkard.github.io/Budget-Travel/
+
 ## Run it
 
 ```bash
