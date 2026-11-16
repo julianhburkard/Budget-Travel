@@ -1,0 +1,48 @@
+name: Refresh per diem rates
+
+# The State Department publishes new foreign rates on the 1st of each month;
+# GSA publishes U.S. rates once a year for the fiscal year starting Oct 1.
+on:
+  schedule:
+    - cron: '17 14 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/fetch-per-diem.mjs
+        env:
+          # Optional repository secret; the script falls back to GSA's public DEMO_KEY.
+          GSA_API_KEY: ${{ secrets.GSA_API_KEY }}
+      - id: commit
+        run: |
+          # Ignore the generatedAt date so a refresh with no rate changes doesn't commit.
+          if git diff --quiet -I'"generatedAt"' -- public/data/per-diem.json; then
+            echo "No rate changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add public/data/per-diem.json
+          git commit -m "Refresh per diem rates"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  # Pushes made by this workflow don't trigger other workflows, so deploy explicitly.
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    uses: ./.github/workflows/deploy.yml

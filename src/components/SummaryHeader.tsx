@@ -10,7 +10,7 @@ interface Props {
   onChange: (fn: (t: Trip) => Trip) => void;
 }
 
-const ORDER: Category[] = ['flights', 'car', 'food', 'activities', 'buffer'];
+const ORDER: Category[] = ['flights', 'lodging', 'car', 'food', 'activities', 'buffer'];
 
 export function SummaryHeader({ trip, summary, onChange }: Props) {
   const set = <K extends keyof Trip>(key: K, value: Trip[K]) => onChange((t) => ({ ...t, [key]: value }));
@@ -51,7 +51,7 @@ export function SummaryHeader({ trip, summary, onChange }: Props) {
         <Stat
           label="Average cost / day"
           value={moneyRounded(summary.avgPerDay)}
-          hint="flights & car spread over every day"
+          hint="fixed costs spread over every day"
           tone={summary.avgPerDay > summary.budgetPerDay ? 'bad' : undefined}
         />
         <Stat label="Budget / day" value={moneyRounded(summary.budgetPerDay)} hint="your target" />
@@ -108,6 +108,33 @@ export function SummaryHeader({ trip, summary, onChange }: Props) {
                 <RemoveButton label={`Remove ${f.label}`} onClick={() => set('flights', trip.flights.filter((x) => x.id !== f.id))} />
               </div>
             ))}
+          </FixedList>
+
+          <FixedList
+            title="Lodging"
+            empty="No lodging yet"
+            total={summary.byCategory.lodging}
+            onAdd={() =>
+              set('lodging', [...trip.lodging, { id: newId(), label: 'Hotel', checkIn: trip.startDate, checkOut: trip.endDate, cost: 0 }])
+            }
+          >
+            {trip.lodging.map((l) => {
+              // Editing an estimated stay by hand makes it the user's own.
+              const patch = (p: Partial<typeof l>) =>
+                set('lodging', trip.lodging.map((x) => (x.id === l.id ? { ...x, ...p, fromEstimate: false } : x)));
+              return (
+                <div className="fixed-item car" key={l.id}>
+                  <input className="text" value={l.label} aria-label="Lodging name" onChange={(e) => patch({ label: e.target.value })} />
+                  <span className="date-pair compact">
+                    <input type="date" value={l.checkIn} aria-label="Check-in date" onChange={(e) => patch({ checkIn: e.target.value })} />
+                    <span className="muted">→</span>
+                    <input type="date" value={l.checkOut} min={l.checkIn} aria-label="Check-out date" onChange={(e) => patch({ checkOut: e.target.value })} />
+                  </span>
+                  <NumberInput value={l.cost} aria-label="Total lodging cost" onChange={(n) => patch({ cost: n })} />
+                  <RemoveButton label={`Remove ${l.label}`} onClick={() => set('lodging', trip.lodging.filter((x) => x.id !== l.id))} />
+                </div>
+              );
+            })}
           </FixedList>
 
           <FixedList

@@ -129,7 +129,7 @@ function DayCard({ day, trip, budgetPerDay, maxDay, onAdd, onUpdateActivity, onR
       </header>
 
       <div className="day-bar" aria-hidden>
-        {(['flights', 'car', 'food', 'activities'] as const).map((c) => {
+        {(['flights', 'lodging', 'car', 'food', 'activities'] as const).map((c) => {
           const v = day.lines.filter((l) => l.category === c).reduce((s, l) => s + l.amount, 0);
           return v > 0 ? <span key={c} className={`seg cat-${c}`} style={{ width: `${(v / maxDay) * 100}%` }} /> : null;
         })}

@@ -1,10 +1,11 @@
-import { dateRange } from './dates';
-import type { Activity, ISODate, Trip } from './types';
+import { addDays, dateRange } from './dates';
+import type { Activity, ISODate, Lodging, Trip } from './types';
 
-export type Category = 'flights' | 'car' | 'food' | 'activities' | 'buffer';
+export type Category = 'flights' | 'lodging' | 'car' | 'food' | 'activities' | 'buffer';
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   flights: 'Flights',
+  lodging: 'Lodging',
   car: 'Rental car',
   food: 'Food & drinks',
   activities: 'Activities',
@@ -56,6 +57,12 @@ function clampToTrip(date: ISODate, days: ISODate[]): ISODate {
   return date;
 }
 
+/** The nights of a stay: check-in up to the day before check-out (at least one night). */
+export function lodgingNights(stay: Pick<Lodging, 'checkIn' | 'checkOut'>): ISODate[] {
+  if (stay.checkOut <= stay.checkIn) return dateRange(stay.checkIn, stay.checkIn);
+  return dateRange(stay.checkIn, addDays(stay.checkOut, -1));
+}
+
 export function foodForDay(trip: Trip, date: ISODate): number {
   return trip.foodOverrides[date] ?? trip.foodPerDay;
 }
@@ -79,6 +86,21 @@ export function summarize(trip: Trip): TripSummary {
       } else {
         push(clampToTrip(f.date, days), { key: `f-${f.id}`, category: 'flights', label: f.label, amount: f.cost, auto: true });
       }
+    }
+
+    for (const l of trip.lodging) {
+      const nights = lodgingNights(l).filter((d) => daySet.has(d));
+      // Spread mode, or a stay that doesn't overlap the trip: spread over the whole trip.
+      const target = spread || nights.length === 0 ? days : nights;
+      target.forEach((d, i) =>
+        push(d, {
+          key: `l-${l.id}`,
+          category: 'lodging',
+          label: spread ? `${l.label} (1/${n} share)` : `${l.label} (night ${i + 1} of ${target.length})`,
+          amount: l.cost / target.length,
+          auto: true,
+        }),
+      );
     }
 
     for (const c of trip.rentalCars) {
@@ -110,7 +132,7 @@ export function summarize(trip: Trip): TripSummary {
     }
   }
 
-  const byCategory: Record<Category, number> = { flights: 0, car: 0, food: 0, activities: 0, buffer: 0 };
+  const byCategory: Record<Category, number> = { flights: 0, lodging: 0, car: 0, food: 0, activities: 0, buffer: 0 };
   const pct = Math.max(0, trip.bufferPct) / 100;
 
   const ledger: LedgerDay[] = days.map((date, index) => {
@@ -122,10 +144,11 @@ export function summarize(trip: Trip): TripSummary {
 
   // Category totals come from the source data so they're exact, regardless of spreading.
   byCategory.flights = n ? trip.flights.reduce((s, f) => s + f.cost, 0) : 0;
+  byCategory.lodging = n ? trip.lodging.reduce((s, l) => s + l.cost, 0) : 0;
   byCategory.car = n ? trip.rentalCars.reduce((s, c) => s + c.cost, 0) : 0;
   byCategory.food = days.reduce((s, d) => s + foodForDay(trip, d), 0);
   byCategory.activities = trip.activities.reduce((s, a) => s + a.cost, 0);
-  const plannedSubtotal = byCategory.flights + byCategory.car + byCategory.food + byCategory.activities;
+  const plannedSubtotal = byCategory.flights + byCategory.lodging + byCategory.car + byCategory.food + byCategory.activities;
   byCategory.buffer = plannedSubtotal * pct;
   const plannedTotal = plannedSubtotal + byCategory.buffer;
 

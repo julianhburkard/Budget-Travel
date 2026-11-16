@@ -12,6 +12,7 @@
   --track: #e8e6df;
 
   --c-flights: #3b6fd8;
+  --c-lodging: #c94f7c;
   --c-car: #8b5cc7;
   --c-food: #e08a2b;
   --c-activities: #2a9d78;
@@ -42,6 +43,7 @@
     --bad: #f07a70;
     --track: #2e2f2a;
     --c-flights: #6f98ec;
+    --c-lodging: #e882a8;
     --c-car: #b08ae0;
     --c-food: #f0a556;
     --c-activities: #4fc39c;
@@ -143,6 +145,7 @@ h3 { margin: 0; font-size: 0.95rem; }
 
 .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
 .cat-flights { background: var(--c-flights); }
+.cat-lodging { background: var(--c-lodging); }
 .cat-car { background: var(--c-car); }
 .cat-food { background: var(--c-food); }
 .cat-activities { background: var(--c-activities); }
@@ -217,3 +220,39 @@ h3 { margin: 0; font-size: 0.95rem; }
 .day { min-width: 0; }
 .day-head > div:first-child { flex: none; }
 .day-total { min-width: 0; }
+
+/* Destination estimate */
+.estimate { display: flex; flex-direction: column; gap: 16px; }
+.estimate-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.estimate-controls { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+.estimate-controls > .field.grow { flex: 1 1 280px; max-width: 520px; }
+.estimate-hint, .estimate-source { margin: 0; }
+.estimate-source a { color: inherit; }
+.city-loading { padding: 8px 0; }
+.estimate-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.estimate-tile { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.estimate-tile .stat-label { display: flex; align-items: center; gap: 6px; }
+.estimate-tile .per-unit { font-size: 0.9rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.estimate-tile .btn { align-self: flex-start; margin-top: 6px; }
+.estimate-tile .btn.applied:disabled { opacity: 1; color: var(--good); border-color: transparent; cursor: default; padding-left: 0; }
+.total-tile { justify-content: center; background: transparent; border: 1px dashed var(--border); }
+
+.city-picker { position: relative; display: flex; align-items: center; }
+.city-input { width: 100%; padding: 8px 34px 8px 10px; font-size: 1.05rem; }
+.city-clear { position: absolute; right: 4px; }
+.city-results {
+  position: absolute; z-index: 10; top: calc(100% + 4px); left: 0; right: 0; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  max-height: 320px; overflow-y: auto;
+}
+.city-results li { padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; }
+.city-results li.active { background: var(--surface-2); }
+.city-results li.city-empty { cursor: default; }
+
+@media (max-width: 860px) {
+  .estimate-grid { grid-template-columns: 1fr; }
+}
+
+/* Lodging & rental car rows: name on its own line, then dates, cost and remove. */
+.fixed-item.car input.text { flex: 1 1 100%; }
+.fixed-item.car .date-pair.compact { flex: 1 1 240px; }

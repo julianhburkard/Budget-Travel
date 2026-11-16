@@ -13,6 +13,9 @@ const base: Trip = {
   foodOverrides: {},
   bufferPct: 10,
   flights: [{ id: 'f1', label: 'Outbound', date: '2027-03-01', cost: 500 }],
+  lodging: [],
+  destination: null,
+  perDiemPct: 75,
   rentalCars: [{ id: 'c1', label: 'Car', startDate: '2027-03-02', endDate: '2027-03-04', cost: 300 }],
   activities: [{ id: 'a1', date: '2027-03-03', name: 'Museum', cost: 40 }],
   fixedCostMode: 'spread',
@@ -32,7 +35,7 @@ describe('summarize', () => {
   it('totals categories and adds the buffer on planned spending', () => {
     const s = summarize(base);
     expect(s.dayCount).toBe(5);
-    expect(s.byCategory).toEqual({ flights: 500, car: 300, food: 300, activities: 40, buffer: 114 });
+    expect(s.byCategory).toEqual({ flights: 500, lodging: 0, car: 300, food: 300, activities: 40, buffer: 114 });
     expect(s.plannedTotal).toBe(1254);
     expect(s.remaining).toBe(1746);
     expect(s.avgPerDay).toBe(250.8);
@@ -72,5 +75,14 @@ describe('summarize', () => {
     const s = summarize({ ...base, activities: [...base.activities, { id: 'a2', date: '2027-04-01', name: 'Late', cost: 10 }] });
     expect(s.strayActivities.map((a) => a.id)).toEqual(['a2']);
     expect(s.byCategory.activities).toBe(50);
+  });
+
+  it('places lodging on its nights in actual mode and counts it in the total', () => {
+    const t = { ...base, fixedCostMode: 'actual' as const, lodging: [{ id: 'l1', label: 'Hotel', checkIn: '2027-03-01', checkOut: '2027-03-05', cost: 400 }] };
+    const s = summarize(t);
+    expect(s.byCategory.lodging).toBe(400);
+    const perDay = s.ledger.map((d) => d.lines.filter((l) => l.category === 'lodging').reduce((a, l) => a + l.amount, 0));
+    expect(perDay).toEqual([100, 100, 100, 100, 0]); // 4 nights, nothing on check-out day
+    expect(s.ledger.reduce((a, d) => a + d.total, 0)).toBeCloseTo(s.plannedTotal, 6);
   });
 });

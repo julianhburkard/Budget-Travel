@@ -23,9 +23,12 @@ export function newTrip(name = 'New trip'): Trip {
     foodOverrides: {},
     bufferPct: 10,
     flights: [],
+    lodging: [],
     rentalCars: [],
     activities: [],
     fixedCostMode: 'spread',
+    destination: null,
+    perDiemPct: 75,
     createdAt: Date.now(),
   };
 }

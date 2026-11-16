@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { DestinationEstimate } from './components/DestinationEstimate';
 import { Ledger } from './components/Ledger';
 import { SummaryHeader } from './components/SummaryHeader';
 import { summarize } from './lib/budget';
@@ -52,6 +53,7 @@ export default function App() {
           </div>
         </div>
 
+        <DestinationEstimate trip={trip} summary={summary} onChange={update} />
         <SummaryHeader trip={trip} summary={summary} onChange={update} />
         <Ledger trip={trip} summary={summary} onChange={update} />
       </main>

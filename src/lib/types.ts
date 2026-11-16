@@ -16,6 +16,23 @@ export interface RentalCar {
   cost: number;
 }
 
+export interface Lodging {
+  id: string;
+  label: string;
+  checkIn: ISODate;
+  checkOut: ISODate;
+  /** Total cost for the stay. */
+  cost: number;
+  /** Set when the stay was created from the destination estimate, so it can be updated in place. */
+  fromEstimate?: boolean;
+}
+
+/** The city picked in the destination estimate, from the per diem dataset. */
+export interface Destination {
+  locationId: string;
+  label: string;
+}
+
 export interface Activity {
   id: string;
   date: ISODate;
@@ -26,7 +43,7 @@ export interface Activity {
 /**
  * How fixed costs (flights, rental cars) are placed in the daily ledger.
  * - "spread": divided evenly across every day of the trip
- * - "actual": flights on their date, rental cars across their rental days
+ * - "actual": flights on their date, lodging across its nights, rental cars across their rental days
  * The trip total is the same in both modes.
  */
 export type FixedCostMode = 'spread' | 'actual';
@@ -43,8 +60,12 @@ export interface Trip {
   /** Unplanned expenses buffer, as a percent of planned spending. */
   bufferPct: number;
   flights: Flight[];
+  lodging: Lodging[];
   rentalCars: RentalCar[];
   activities: Activity[];
   fixedCostMode: FixedCostMode;
+  destination: Destination | null;
+  /** Share of the government per diem used for estimates, in percent. */
+  perDiemPct: number;
   createdAt: number;
 }
